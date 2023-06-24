@@ -34,7 +34,7 @@ A hypothesis test was conducted to determine if the quality of coffee differed s
 ## Conclusion
 The coffee quality analysis showed that factors like balance, aftertaste, and flavor played significant roles in determining coffee quality. The team's findings highlighted the importance of considering these factors when assessing coffee quality. Furthermore, we discovered that the moisture and sweetness of the coffee had less impact on its overall quality. Additionally, the analysis revealed that coffee produced in Colombia generally exhibited higher quality compared to coffee from Mexico.
 
-For more detailed information and visuals, please refer to this repository's "Final_report_Fialko_Shvets.html" file.
+For more detailed information and visuals, please refer to this repository's **"Final_report_Fialko_Shvets.html"**.
 
 ## Resources
 - data from the [Coffee Quality Institute](https://database.coffeeinstitute.org/). It is a non-profit organization that works to improve the quality of coffee. 
