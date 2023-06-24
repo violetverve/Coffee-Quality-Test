@@ -1,0 +1,272 @@
+---
+title: "Final_report_Fialko_Shvets"
+output: html_document
+---
+
+# Testing coffee quality
+
+## Final report
+
+Team members: Yaryna Fialko, Shvets Anastasiia
+
+### Libraries
+
+Let's include libraries we need.
+
+```{r, echo=FALSE}
+library(ggplot2)
+
+```
+
+### Reading data
+
+```{r}
+coffee <- head(read.csv("arabica_ratings_raw.csv", header = TRUE), -3) # -1 because the last one sample is just 00 and it spoils data
+
+ggplot(coffee, aes(x=quality_score)) +
+  geom_histogram( binwidth=0.121, fill="#69b3a2", color="#69b3a2") +
+  ggtitle("Distribution of arabica coffee quality") +
+  theme(plot.title = element_text(size=))
+
+```
+
+### Cleaning data
+
+Let's take only those data we will examine.
+
+```{r}
+#select only necessary columns
+coffee.to.analyze <- subset(coffee, select=c(quality_score, Aroma, Flavor, Aftertaste, Acidity, Sweetness, Moisture, Body, Balance, Cupper.Points, Number.of.Bags))
+
+coffee.to.analyze$Moisture = as.double(substr(coffee.to.analyze$Moisture, 1, nchar(coffee.to.analyze$Moisture)-2))
+#colnames(coffee.to.analyze)[7] <- "Moisture_%"
+
+```
+
+```{r}
+summary(coffee.to.analyze)
+```
+
+### Plotting different variables
+
+```{r}
+param <- c("Aroma", "Flavor", "Aftertaste", "Acidity", "Sweetness", "Body", "Balance", "Cupper.Points")
+
+dat <- data.frame(matrix(nrow = 0, ncol = length(c("value", "group"))))
+
+for (value in param)
+
+{
+
+  df1 <- subset(coffee, select=c(value))
+
+  colnames(df1)[1] ="values"
+
+  df2 <- data.frame(group = value)
+
+  updated <- cbind(df1, df2)
+
+  dat <- rbind(dat, updated)
+
+}
+
+ggplot(dat, aes(x = values, fill = group)) + geom_density(alpha = 0.8 )
+```
+
+We can see that all farctos except **Sweetness** are spread in the same interval with really close density.
+
+Let's look on correlation between **quality** of coffee and factors that affect it.
+
+```{r}
+correlation <- cor(coffee.to.analyze)
+print(correlation[,"quality_score"])
+
+```
+
+As we can see, **Balance, Aftertaste, Flavor** are the most correlated ones. Let's look on its graphics:
+
+```{r}
+ggplot(data=coffee.to.analyze, aes(x=quality_score, Balance)) +
+  geom_point() +
+  geom_rug(col="steelblue",alpha=0.1, size=1)
+
+```
+
+```{r}
+ggplot(data=coffee.to.analyze, aes(x=quality_score, Aftertaste)) +
+  geom_point() +
+  geom_rug(col="steelblue",alpha=0.1, size=1)
+
+```
+
+```{r}
+ggplot(data=coffee.to.analyze, aes(x=quality_score, Flavor)) +
+  geom_point() +
+  geom_rug(col="steelblue",alpha=0.1, size=1)
+
+```
+
+Let's look if we can say that they are **linearly dependent**.
+
+```{r}
+y <- coffee.to.analyze$quality_score
+
+x_aftertaste <- coffee.to.analyze$Aftertaste
+reg_aftertaste <- lm(y~x_aftertaste)
+summary(reg_aftertaste)
+
+x_balance <- coffee.to.analyze$Balance
+reg_balance <- lm(y~x_balance)
+summary(reg_balance)
+
+x_flavor <- coffee.to.analyze$Flavor
+reg_flavor <- lm(y~x_flavor)
+summary(reg_flavor)
+
+```
+
+As we can see $r^2$ in **Balance** is about $0.6$, so we can't really conclude that quality depends on this factors strongly linearly. But actually there is some sort of linear correlation.
+
+And **Aftertaste** and **Flavor** have $r^2$ about $0.7$, so they correlate with quality more linearly.
+
+**Sweetness, Number.of.Bags** and **Moisture** are the less correlated.
+
+```{r}
+ggplot(data=coffee.to.analyze, aes(x=quality_score, Sweetness)) +
+  geom_point() +
+  geom_rug(col="steelblue",alpha=0.1, size=1)
+
+```
+
+```{r}
+ggplot(data=coffee.to.analyze, aes(x=quality_score, Moisture)) +
+  geom_point() +
+  geom_rug(col="steelblue",alpha=0.1, size=1)
+
+```
+
+```{r}
+ggplot(data=coffee.to.analyze, aes(x=quality_score, Number.of.Bags)) +
+  geom_point() +
+  geom_rug(col="steelblue",alpha=0.1, size=1)
+
+```
+
+```{r}
+
+#Sample data
+
+
+dataframe1 <- subset(coffee, select=c(quality_score))
+colnames(dataframe1)[1] ="values"
+dataframe2 <- data.frame(group = "quality_score")
+
+
+dataframe3 <- subset(coffee, select=c(Number.of.Bags))
+colnames(dataframe3)[1] ="values"
+dataframe4 <- data.frame(group = "number_of_bags")
+
+
+updated1 <- cbind(dataframe1, dataframe2)
+updated2 <- cbind(dataframe3, dataframe4)
+
+
+dat <- rbind(updated1, updated2)
+
+ggplot(dat, aes(x = values, fill = group)) + geom_density(alpha = 0.8 )
+
+```
+
+### Hypothesis testing
+
+$H_0 :$ - **Number of bags** and **quality** are assigned independently.
+
+$H_1 :$ - There is a dependence between the **number of bags** and coffee **quality**.
+
+```{r}
+quality_production <- subset(coffee.to.analyze, select=c(quality_score, Number.of.Bags))
+chisq.test(quality_production)
+```
+
+#### Conclusion:
+
+P-value is close to zero, so we can reject $H_0$. There is a dependence between the **number of bags** and coffee **quality**.
+
+### Hypothesis testing
+
+$H_0 :$ - **Sweetness** and **quality** are assigned independently.
+
+$H_1 :$ - There is a dependence between the **sweetness** and coffee **quality**.
+
+```{r}
+quality_sweetness <- subset(coffee.to.analyze, select=c(quality_score, Sweetness))
+chisq.test(quality_sweetness)
+```
+
+#### Conclusion:
+
+P-value is 1, so we cannot reject $H_0$. **Sweetness** and **quality** are assigned independently.
+
+### Hypothesis testing
+
+$H_0 :$ - **Moisture** and **quality** are assigned independently.
+
+$H_1 :$ - There is a dependence between the **moisture** and **coffee quality**.
+
+```{r}
+quality_moisture <- subset(coffee.to.analyze, select=c(quality_score, Moisture))
+chisq.test(quality_moisture)
+```
+
+#### Conclusion:
+
+P-value is almost zero, so we reject $H_0$. The **quality** of coffee and **moisture** are dependent.
+
+### Quality of coffee and country of origin correlation
+
+From the given data the biggest producers of coffee are **Mexico** and **Colombia**.
+
+```{r}
+
+quality_country <- subset(coffee, select=c(quality_score, Country.of.Origin))
+
+filtered <- subset(quality_country, Country.of.Origin %in% c('Colombia','Mexico'))
+
+ggplot(filtered, aes(x=quality_score, col=Country.of.Origin)) + 
+  stat_ecdf() +
+  ylab("density") +
+  ggtitle("Ecdf")
+
+ggplot(filtered, aes(x = quality_score, fill = Country.of.Origin)) + geom_density(alpha = 0.8 )
+
+```
+
+As we can see from density functions and ecdf, the quality of coffee produced in **Colombia** is almost in range $80 - 86$, and the most common value is about $84$. At the same time, quality of coffee from **Mexico** is between $78$ and $84$, and the mode is $82$.
+
+### Hypothesis testing
+
+$H_0 :$ - The quality of coffee produced in **Colombia** and **Mexico** is the same.
+
+$H_1 :$ - The quality of coffee produced in **Colombia** and **Mexico** differs.
+
+#### Test $H_0 : \mu_1 = \mu_2$ vs. $H_1 : \mu_1 \ne \mu_2$
+
+```{r}
+
+Colombia <-  subset(quality_country, Country.of.Origin == 'Colombia')[1]
+Mexico <-  subset(quality_country, Country.of.Origin == 'Mexico')[1]
+
+t.test(Colombia, Mexico, paired=FALSE)
+```
+
+P-value is almost zero, so we reject $H_0$. The quality of coffee produced in **Colombia** and **Mexico** differs.
+
+#### Conclusion:
+
+Overall, **Colombia** produce coffee with better quality comparing to **Mexico**.
+
+## General conclusion
+
+Taking into account all above, we can say that **quality of coffee** mostly depends on its balance, aftertaste and flavor, and its correlation with aftertaste and flavor is really close to linear. Its moisture and sweetness affects quality of coffee the less. Though, we can't reject that the moisture influence the quality, the sweetness and the quality of coffee are independent.
+
+Also, among Colombia and Mexico - the biggest producers of coffee - Colombia produce coffee wuth higher quality.
